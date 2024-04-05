@@ -1,25 +1,35 @@
 import Database from "../Database/index.js";
+
 function AssignmentRoutes(app) {
-  // Update Assignment
-  app.put("/api/courses/:cid/assignments/:aid", (req, res) => {
-    const { aid } = req.params;
-    const assignmentIndex = db.assignment.findIndex(
-      (a) => a._id === aid);
-    db.assignment[assignmentIndex] = {
-      ...db.assignment[assignmentIndex],
-      ...req.body
+    // Update assignment
+    app.put("/api/assignments/:aid", (req, res) => {
+        const { aid } = req.params;
+        const assignmentIndex = Database.assignments.findIndex(
+            (a) => a._id === aid);
+        Database.assignments[assignmentIndex] = {
+            ...Database.assignments[assignmentIndex],
+            ...req.body
+        };
+        res.sendStatus(204);
+    });
+
+    // Delete an Assignment
+    const deleteAssignment = (req, res) => {
+        const id = req.params.id;
+        const index = Database.assignments.findIndex((assignment) => assignment._id === id);
+        // If no assignment is found, return 404
+        if (index !== -1) {
+            Database.assignments.splice(index, 1);
+            res.json(Database.assignments);
+        } else {
+            res.status(404)
+        }
     };
-    res.sendStatus(200);
-  });
-  // Deleting an Assignment
-  app.delete("/api/courses/:cid/assignments/:aid", (req, res) => {
-    const { aid } = req.params;
-    Database.assignments = Database.assignments.filter((a) => a._id !== aid);
-    res.sendStatus(200);
-  });
-    // Create assignment
+    app.delete("/api/assignments/:id", deleteAssignment);
+
+    // Create a new Assignment
     app.post("/api/courses/:cid/assignments", (req, res) => {
-        const {cid} = req.params;
+        const { cid } = req.params;
         const newAssignment = {
             ...req.body,
             course: cid,
@@ -27,16 +37,15 @@ function AssignmentRoutes(app) {
         };
         Database.assignments.push(newAssignment);
         res.send(newAssignment);
-    }
-    );
-    // Retrieve assignment
-    app.get("/api/courses/:cid/assignments", (req, res) => {
-        const { aid } = req.params;
-        const assignment = Database.assignments.find((a) => a._id === aid);
-        if (!assignment) {
-            res.status(404).send("Assignment not found");
-            return;
-        }
-        res.send(assignment);
     });
-} export default AssignmentRoutes;
+
+    // Retrieving Assignments by Course ID
+    app.get("/api/courses/:cid/assignments", (req, res) => {
+        const { cid } = req.params;
+        const assignments = Database.assignments
+        // Filter assignments by course id
+            .filter((a) => a.course === cid);
+        res.send(assignments);
+    });
+}
+export default AssignmentRoutes;
