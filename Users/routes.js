@@ -1,5 +1,6 @@
 // Routes for the user collection
 import * as dao from "./dao.js";
+let currentUser = null;
 export default function UserRoutes(app) {
   //  Create user
   const createUser = async (req, res) => {
@@ -42,21 +43,15 @@ export default function UserRoutes(app) {
       res.status(400).json(
         { message: "Username already taken" });
     }
-    const currentUser = await dao.createUser(req.body);
-    req.session["currentUser"] = currentUser;
+    currentUser = await dao.createUser(req.body);
     res.json(currentUser);
   };
    // Sign in
-   const signin = async (req, res) => {
+  const signin = async (req, res) => {
     const { username, password } = req.body;
-    const currentUser = await dao.findUserByCredentials(username, password);
-    if (currentUser) {
-      req.session["currentUser"] = currentUser;
-      res.json(currentUser);
-    } else {
-      res.sendStatus(401);
-    }
-  };
+    currentUser = await dao.findUserByCredentials(username, password);
+    res.json(currentUser);
+   };
   //  Sign out
   const signout = (req, res) => {
     currentUser = null;
@@ -64,12 +59,7 @@ export default function UserRoutes(app) {
   };
   app.post("/api/users/signout", signout);
   // Profile
-  const profile = (req, res) => {
-    const currentUser = req.session["currentUser"];
-    if (!currentUser) {
-      res.sendStatus(401);
-      return;
-    }
+  const profile = async (req, res) => {
     res.json(currentUser);
   };
   app.post("/api/users", createUser);
